@@ -38,6 +38,7 @@
             this.buttonMKGTree = new System.Windows.Forms.Button();
             this.treeView = new System.Windows.Forms.TreeView();
             this.listBox = new System.Windows.Forms.ListBox();
+            this.buttonDeSelectAll = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox
@@ -51,6 +52,7 @@
             this.textBox.Size = new System.Drawing.Size(219, 29);
             this.textBox.TabIndex = 1;
             this.textBox.TextChanged += new System.EventHandler(this.textBox_TextChanged);
+            this.textBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox_KeyDown);
             // 
             // buttonInsertNode
             // 
@@ -150,23 +152,34 @@
             // 
             // listBox
             // 
-            this.listBox.AccessibleName = "";
             this.listBox.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
-            this.listBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.listBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.listBox.FormattingEnabled = true;
             this.listBox.ItemHeight = 24;
-            this.listBox.Location = new System.Drawing.Point(312, 47);
+            this.listBox.Location = new System.Drawing.Point(312, 71);
             this.listBox.Name = "listBox";
-            this.listBox.Size = new System.Drawing.Size(219, 460);
-            this.listBox.TabIndex = 11;
-            this.listBox.Tag = "";
-            this.listBox.UseTabStops = false;
+            this.listBox.Size = new System.Drawing.Size(219, 436);
+            this.listBox.TabIndex = 13;
+            this.listBox.SelectedIndexChanged += new System.EventHandler(this.listBox_SelectedIndexChanged);
+            // 
+            // buttonDeSelectAll
+            // 
+            this.buttonDeSelectAll.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(128)))));
+            this.buttonDeSelectAll.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.buttonDeSelectAll.Location = new System.Drawing.Point(312, 45);
+            this.buttonDeSelectAll.Name = "buttonDeSelectAll";
+            this.buttonDeSelectAll.Size = new System.Drawing.Size(219, 23);
+            this.buttonDeSelectAll.TabIndex = 14;
+            this.buttonDeSelectAll.Text = "ClearTextBox and DeSelect";
+            this.buttonDeSelectAll.UseVisualStyleBackColor = false;
+            this.buttonDeSelectAll.Click += new System.EventHandler(this.buttonDeSelectAll_Click_1);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(769, 515);
+            this.ClientSize = new System.Drawing.Size(769, 513);
+            this.Controls.Add(this.buttonDeSelectAll);
             this.Controls.Add(this.listBox);
             this.Controls.Add(this.treeView);
             this.Controls.Add(this.buttonMKGTree);
@@ -198,6 +211,7 @@
         private System.Windows.Forms.Button buttonMKGTree;
         private System.Windows.Forms.TreeView treeView;
         private System.Windows.Forms.ListBox listBox;
+        private System.Windows.Forms.Button buttonDeSelectAll;
     }
 }
 

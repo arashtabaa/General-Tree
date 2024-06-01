@@ -1,376 +1,493 @@
 ﻿using System;
-using System.Runtime.Remoting.Lifetime;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace General_Tree
 {
     public partial class Form1 : Form
     {
+        private TreeNode GeneralTreeNode; // نود اصلی درخت عمومی
+        private List<TreeNode> InsertNodes; // لیست نودهایی که با InsertNode اضافه شده‌اند
+        private List<TreeNode> AddItemNodes; // لیست نودهایی که با AddItem اضافه شده‌اند
+        private List<string> ListBoxItems; // لیست آیتم‌های لیست‌باکس
+
         public Form1()
         {
             InitializeComponent();
-            listBox.SelectionMode = SelectionMode.None; // غیرفعال کردن انتخاب آیتم‌های لیست باکس
+            InsertNodes = new List<TreeNode>();
+            AddItemNodes = new List<TreeNode>();
+            ListBoxItems = new List<string>();
         }
 
-        // ویژگی برای مشخص کردن اولین درخت عمومی انتخاب شده
-        private bool IsFirstNodeOfTree(TreeNode node)
-        {
-            return node == treeView.Nodes[0];
-        }
-
-        // رویداد کلیک دکمه buttonMKGTree برای ایجاد ریشه درخت
-        private void buttonMKGTree_Click(object sender, EventArgs e)
-        {
-            string input = textBox.Text.Trim();
-
-            // بررسی خالی بودن متن ورودی
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("Please enter a valid name or number.");
-                return;
-            }
-
-            // بررسی وجود درخت عمومی و نمایش پیام تاییدیه
-            if (treeView.Nodes.Count > 0)
-            {
-                DialogResult result = MessageBox.Show("You are about to delete the existing general tree. Are you sure?",
-                                                      "Confirm Create New Tree",
-                                                      MessageBoxButtons.YesNo);
-                if (result != DialogResult.Yes)
-                {
-                    return;
-                }
-            }
-
-            // ایجاد ریشه جدید و پاک کردن ریشه‌های قبلی
-            TreeNode rootNode = new TreeNode(input);
-            treeView.Nodes.Clear();
-            treeView.Nodes.Add(rootNode);
-            // تنظیم ویژگی IsFirstNodeOfTree برای اولین درخت عمومی انتخاب شده
-            rootNode.Tag = "FirstTree";
-
-            // پاک کردن و افزودن نام ریشه به لیست
-            listBox.Items.Clear();
-            listBox.Items.Add(input);
-
-            // باز کردن تمام نودها و زیرمجموعه‌ها
-            treeView.ExpandAll();
-
-            textBox.Clear();
-        }
-
-        // رویداد کلیک دکمه buttonInsertNode برای افزودن نود به درخت
-        private void buttonInsertNode_Click(object sender, EventArgs e)
-        {
-            string input = textBox.Text.Trim();
-
-            // بررسی خالی بودن متن ورودی
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("Please enter a valid name or number.");
-                return;
-            }
-
-            // بررسی انتخاب نود در درخت
-            if (treeView.SelectedNode == null)
-            {
-                MessageBox.Show("Please select a node to add an item.");
-                return;
-            }
-
-            // بررسی آیا نود انتخاب شده درخت عمومی است یا نه
-            if (!IsFirstNodeOfTree(treeView.SelectedNode))
-            {
-                MessageBox.Show("You can only add items to nodes under the main general tree.");
-                return;
-            }
-
-            // بررسی تکراری نبودن نام نود
-            TreeNode selectedNode = treeView.SelectedNode;
-            foreach (TreeNode node in selectedNode.Nodes)
-            {
-                if (node.Text.Equals(input, StringComparison.OrdinalIgnoreCase))
-                {
-                    MessageBox.Show("Duplicate name is not allowed.");
-                    return;
-                }
-            }
-
-            // افزودن نود جدید به زیرمجموعه‌های نود انتخاب شده
-            TreeNode newNode = new TreeNode(input);
-            selectedNode.Nodes.Add(newNode);
-
-
-            // به روزرسانی لیست
-            UpdateListBox();
-
-            // باز کردن تمام نودها و زیرمجموعه‌ها
-            treeView.ExpandAll();
-
-            textBox.Clear();
-        }
-
-        // متد برای به روزرسانی لیست بر اساس ساختار درخت
-        private void UpdateListBox()
-        {
-            listBox.Items.Clear();
-            foreach (TreeNode node in treeView.Nodes)
-            {
-                AddNodeToListBox(node, 0);
-            }
-        }
-
-        // متد برای افزودن نود به لیست با رعایت سطح درخت
-        private void AddNodeToListBox(TreeNode node, int level)
-        {
-            string indent = new string(' ', level * 2);
-            listBox.Items.Add(indent + node.Text);
-
-            foreach (TreeNode childNode in node.Nodes)
-            {
-                AddNodeToListBox(childNode, level + 1);
-            }
-        }
-
-        // رویداد کلیک دکمه buttonDeleteNode برای حذف نود انتخاب شده
-        private void buttonDeleteNode_Click(object sender, EventArgs e)
-        {
-            if (treeView.SelectedNode == null)
-            {
-                MessageBox.Show("Please select a node in the tree to delete.");
-                return;
-            }
-
-            TreeNode selectedNode = treeView.SelectedNode;
-
-            // نمایش پیام تایید حذف نود
-            DialogResult result = MessageBox.Show("Are you sure you want to delete this node and all its children?",
-                                                  "Confirm Delete",
-                                                  MessageBoxButtons.YesNo);
-            if (result == DialogResult.Yes)
-            {
-                selectedNode.Remove();
-                UpdateListBox();
-            }
-        }
-
-        // رویداد کلیک دکمه buttonSearchNode برای جستجوی نود
-        private void buttonSearchNode_Click(object sender, EventArgs e)
-        {
-            string input = textBox.Text.Trim();
-
-            // بررسی خالی بودن متن ورودی
-            if (string.IsNullOrEmpty(input))
-            {
-                MessageBox.Show("Please enter a valid name or number.");
-                return;
-            }
-
-            TreeNode selectedNode = treeView.SelectedNode;
-
-            // بررسی اینکه آیا نود انتخاب شده نود اولین درخت عمومی است یا نه
-            if (selectedNode != null && IsFirstNodeOfTree(selectedNode))
-            {
-                // گرفتن اولین نود که درخت عمومی است
-                TreeNode mainGeneralTree = treeView.Nodes[0];
-
-                // جستجوی نود در نود‌های مستقیم درخت عمومی
-                foreach (TreeNode node in mainGeneralTree.Nodes)
-                {
-                    if (node.Text.Equals(input, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // نمایش نود موردنظر اگر در نود‌های مستقیم درخت عمومی پیدا شود
-                        treeView.SelectedNode = node;
-                        treeView.SelectedNode.Expand();
-                        treeView.Focus();
-                        MessageBox.Show("Node found and selected.");
-                        return; // پس از یافتن نود، از حلقه خارج شوید
-                    }
-                }
-
-                // اگر نود موردنظر یافت نشد، نمایش پیام مناسب
-                MessageBox.Show("Node not found.");
-            }
-            else
-            {
-                // در صورتی که نود اولین درخت عمومی انتخاب نشده باشد، نمایش پیام مناسب
-                MessageBox.Show("You can only search in the main general tree.");
-            }
-        }
-
-        // متد بازگشتی برای جستجوی نود در نودهای مستقیم درخت
-        private TreeNode FindNode(TreeNodeCollection nodes, string text)
-        {
-            foreach (TreeNode node in nodes)
-            {
-                // اگر متن نود فعلی با متن ورودی برابر باشد، نود فعلی را برمی‌گرداند
-                if (node.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
-                {
-                    return node;
-                }
-
-                // اگر نود فعلی فرزند نداشته باشد، این قسمت را از دست می‌دهد
-                // در غیر این صورت، به طور بازگشتی در زیرمجموعه‌های نود فعلی جستجو می‌کند
-                TreeNode foundNode = FindNode(node.Nodes, text);
-                if (foundNode != null)
-                {
-                    return foundNode;
-                }
-            }
-
-            // اگر نودی با متن ورودی پیدا نشود، null برمی‌گردد
-            return null;
-        }
-
-        // رویداد کلیک دکمه buttonAddItem برای افزودن آیتم به زیر مجموعه نود انتخاب شده
+        // رویداد کلیک برای دکمه AddItem
         private void buttonAddItem_Click(object sender, EventArgs e)
         {
             string input = textBox.Text.Trim();
 
-            // بررسی خالی بودن متن ورودی
+            // بررسی خالی نبودن ورودی
             if (string.IsNullOrEmpty(input))
             {
                 MessageBox.Show("Please enter a valid name or number.");
                 return;
             }
 
-            // بررسی انتخاب نود در درخت
-            if (treeView.SelectedNode == null)
+            // بررسی وجود آیتم تکراری در لیست باکس
+            if (listBox.Items.Contains(input))
             {
-                MessageBox.Show("Please select a node to add an item.");
+                MessageBox.Show("Duplicate name is not allowed.");
                 return;
             }
 
-            // بررسی آیا نود انتخاب شده درخت عمومی است یا نه
-            if (treeView.SelectedNode.Parent == null && IsFirstNodeOfTree(treeView.SelectedNode) && treeView.SelectedNode.Tag?.ToString() == "FirstTree")
+            listBox.Items.Add(input);
+            ListBoxItems.Add(input); // اضافه کردن آیتم به لیست آیتم‌ها
+            textBox.Clear();
+        }
+
+        // رویداد کلیک برای دکمه تبدیل آیتم به درخت اصلی
+        private void buttonMKGTree_Click(object sender, EventArgs e)
+        {
+            // بررسی آیا حداقل یک آیتم در لیست باکس انتخاب شده است
+            if (listBox.SelectedItem != null)
             {
-                MessageBox.Show("You can only insert nodes under the main general tree.");
+                // بررسی آیا متنی در تکست باکس وارد شده است یا خیر
+                if (string.IsNullOrEmpty(textBox.Text.Trim()))
+                {
+                    MessageBox.Show("Please enter a name for the main tree.");
+                    return;
+                }
+
+                // انتخاب نام برای ساخت درخت اصلی
+                string input = textBox.Text.Trim();
+
+                // بررسی وجود نام تکراری در لیست باکس
+                if (listBox.Items.Contains(input))
+                {
+                    MessageBox.Show("A tree with this name already exists.");
+                    return;
+                }
+
+                // بررسی وجود نام تکراری در درخت
+                if (TreeContainsName(input, GeneralTreeNode))
+                {
+                    MessageBox.Show("A tree with this name already exists.");
+                    return;
+                }
+
+                // نمایش پیام تأیید
+                DialogResult result = MessageBox.Show("You are about to create a new main tree. Are you sure?",
+                                                      "Confirm Create New Main Tree",
+                                                      MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    // ساخت درخت اصلی جدید
+                    TreeNode rootNode = new TreeNode(input);
+                    treeView.Nodes.Clear();
+                    treeView.Nodes.Add(rootNode);
+                    GeneralTreeNode = rootNode;
+
+                    InsertNodes.Clear();
+                    AddItemNodes.Clear();
+
+                    // اضافه کردن نام درخت جدید به لیست باکس و پاک کردن سایر آیتم‌ها
+                    listBox.Items.Clear();
+                    listBox.Items.Add(input);
+
+                    UpdateListBox();
+                    treeView.ExpandAll();
+
+                    // پاک کردن محتوای textBox
+                    textBox.Clear();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select an item from the list to create a new main tree.");
+            }
+        }
+
+        // رویداد کلیک برای دکمه InsertNode
+        private void buttonInsertNode_Click(object sender, EventArgs e)
+        {
+            if (listBox.SelectedItem == null || treeView.SelectedNode == null)
+            {
+                MessageBox.Show("Please select an item from the list and a node from the tree.");
                 return;
             }
 
-            // بررسی تکراری نبودن نام نود
-            foreach (TreeNode node in treeView.SelectedNode.Nodes)
+            string input = listBox.SelectedItem.ToString();
+            TreeNode selectedNode = treeView.SelectedNode;
+
+            // بررسی عدم وجود نود تکراری و عدم افزودن نود با نام نود اصلی به درخت
+            if (selectedNode.Nodes.Cast<TreeNode>().Any(node => node.Text.Equals(input, StringComparison.OrdinalIgnoreCase)) ||
+                input.Equals(GeneralTreeNode.Text, StringComparison.OrdinalIgnoreCase))
+            {
+                MessageBox.Show("Duplicate name or adding the main tree node name is not allowed.");
+                return;
+            }
+
+            // بررسی تطابق نام نود جدید با نام نودهای زیرمجموعه
+            foreach (TreeNode node in selectedNode.Nodes)
             {
                 if (node.Text.Equals(input, StringComparison.OrdinalIgnoreCase))
                 {
-                    MessageBox.Show("Duplicate name is not allowed.");
+                    MessageBox.Show("Duplicate name within subtree is not allowed.");
                     return;
                 }
             }
 
-            // افزودن نود جدید به زیرمجموعه‌های نود انتخاب شده
-            TreeNode selectedNode = treeView.SelectedNode;
+            // بررسی تطابق نام نود جدید با نام نودهای اضافه شده به درخت
+            if (TreeContainsName(input, GeneralTreeNode))
+            {
+                MessageBox.Show("Duplicate name already exists in the tree.");
+                return;
+            }
+
             TreeNode newNode = new TreeNode(input);
             selectedNode.Nodes.Add(newNode);
+            InsertNodes.Add(newNode);
 
-            // به روزرسانی لیست
+            // اضافه کردن نام نود جدید به لیست آیتم‌ها
+            ListBoxItems.Add(input);
+
             UpdateListBox();
-
-            // باز کردن تمام نودها و زیرمجموعه‌ها
             treeView.ExpandAll();
-
             textBox.Clear();
         }
 
-        // رویداد کلیک دکمه buttonRemoveItem برای حذف آیتم از زیر مجموعه نود انتخاب شده
+        // متد برای بررسی وجود نام در درخت
+        private bool TreeContainsName(string name, TreeNode rootNode)
+        {
+            if (rootNode == null)
+                return false;
+
+            if (rootNode.Text.Equals(name, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            foreach (TreeNode node in rootNode.Nodes)
+            {
+                if (TreeContainsName(name, node))
+                    return true;
+            }
+
+            return false;
+        }
+
+        // بروزرسانی ListBox
+        private void UpdateListBox()
+        {
+            listBox.Items.Clear();
+
+            // اضافه کردن درخت اصلی به لیست باکس
+            if (GeneralTreeNode != null)
+            {
+                listBox.Items.Add(GeneralTreeNode.Text);
+            }
+
+            // اضافه کردن نودهای درخت اصلی به لیست باکس
+            foreach (TreeNode node in GeneralTreeNode.Nodes)
+            {
+                listBox.Items.Add(node.Text);
+            }
+
+            // اضافه کردن نودهای InsertNodes به لیست باکس
+            foreach (TreeNode node in InsertNodes)
+            {
+                // بررسی اینکه نود در لیست باکس وجود ندارد
+                if (!listBox.Items.Contains(node.Text))
+                {
+                    listBox.Items.Add(node.Text);
+                }
+            }
+
+            // اضافه کردن آیتم‌های باقی‌مانده به لیست باکس
+            foreach (string item in ListBoxItems)
+            {
+                // بررسی اینکه آیتم در لیست باکس وجود ندارد و آیتم درخت اصلی نیست
+                if (!listBox.Items.Contains(item) && item != GeneralTreeNode.Text)
+                {
+                    listBox.Items.Add(item);
+                }
+            }
+        }
+
+        // رویداد کلیک برای دکمه DeleteItem
         private void buttonRemoveItem_Click(object sender, EventArgs e)
         {
-            if (treeView.SelectedNode == null)
+            // بررسی اینکه آیا آیتمی در لیست باکس انتخاب شده است یا خیر
+            if (listBox.SelectedItem == null)
             {
-                MessageBox.Show("Please select a node to remove an item.");
+                MessageBox.Show("Please select an item to remove.");
                 return;
             }
 
-            TreeNode selectedNode = treeView.SelectedNode;
+            string selectedItem = listBox.SelectedItem.ToString();
 
-            // بررسی آیا نود انتخاب شده درخت عمومی اصلی است یا نه
-            if (IsFirstNodeOfTree(selectedNode) || IsSubNodeOfFirstTree(selectedNode))
+            // بررسی اینکه آیا آیتم انتخاب شده در لیست باکس، نام اولین درخت است
+            if (treeView.Nodes.Count > 0 && selectedItem.Equals(treeView.Nodes[0].Text))
             {
-                MessageBox.Show("You cannot remove items from the main general tree.");
-                return;
+                // نمایش پیام هشداری برای تأیید حذف درخت اصلی
+                DialogResult result = MessageBox.Show("Are you sure you want to delete the main tree and all its items?",
+                                                      "Confirm Delete",
+                                                      MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    // پاک کردن همه درخت‌ها و لیست آیتم‌ها
+                    treeView.Nodes.Clear();
+                    listBox.Items.Clear();
+                    ListBoxItems.Clear();
+                    GeneralTreeNode = null;
+
+                    MessageBox.Show("Main tree and all its items have been deleted successfully.");
+                    textBox.Clear();
+                }
+            }
+            else
+            {
+                // نمایش پیام هشداری برای تأیید حذف آیتم
+                DialogResult result = MessageBox.Show("Are you sure you want to delete this item?",
+                                                      "Confirm Delete",
+                                                      MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    // حذف آیتم از لیست باکس
+                    listBox.Items.Remove(selectedItem);
+                    ListBoxItems.Remove(selectedItem); // اختیاری: حذف آیتم از لیست موقت آیتم‌ها
+
+                    // حذف نود از درخت در صورتی که وجود داشته باشد
+                    TreeNode nodeToRemove = FindNodeByText(GeneralTreeNode, selectedItem);
+                    if (nodeToRemove != null)
+                    {
+                        nodeToRemove.Remove();
+                    }
+
+                    MessageBox.Show("Item deleted successfully.");
+                    textBox.Clear();
+                }
             }
 
-            // نمایش پیام تایید حذف نود
-            DialogResult result = MessageBox.Show("Are you sure you want to delete this item?",
-                                                  "Confirm Delete",
-                                                  MessageBoxButtons.YesNo);
-            if (result == DialogResult.Yes)
+            // بررسی اینکه آیا لیست باکس خالی شده است
+            if (listBox.Items.Count == 0)
             {
-                selectedNode.Remove();
-                UpdateListBox();
+                GeneralTreeNode = null;
+                MessageBox.Show("There are no items in the list. Please create a new tree.");
             }
         }
 
-        // متد برای بررسی اینکه آیا نود مورد نظر زیرمجموعه‌ی درخت عمومی اصلی است یا نه
-        private bool IsSubNodeOfFirstTree(TreeNode node)
+        // جستجوی نود بر اساس متن
+        private TreeNode FindNodeByText(TreeNode rootNode, string text)
         {
-            TreeNode firstNode = treeView.Nodes[0];
-            return firstNode.Nodes.Contains(node);
+            if (rootNode == null)
+                return null;
+
+            if (rootNode.Text.Equals(text, StringComparison.OrdinalIgnoreCase))
+                return rootNode;
+
+            foreach (TreeNode node in rootNode.Nodes)
+            {
+                TreeNode foundNode = FindNodeByText(node, text);
+                if (foundNode != null)
+                    return foundNode;
+            }
+
+            return null;
         }
 
-        // رویداد کلیک دکمه buttonFindItem برای جستجوی آیتم در زیر مجموعه نود انتخاب شده
+        // رویداد کلیک برای دکمه FindItem - جستجوی آیتم و انتخاب آن در لیست باکس
         private void buttonFindItem_Click(object sender, EventArgs e)
         {
             string input = textBox.Text.Trim();
 
-            // بررسی خالی بودن متن ورودی
             if (string.IsNullOrEmpty(input))
             {
                 MessageBox.Show("Please enter a valid name or number.");
                 return;
             }
 
-            TreeNode selectedNode = treeView.SelectedNode;
-
-            // بررسی انتخاب نود در درخت
-            if (selectedNode == null)
+            for (int i = 0; i < listBox.Items.Count; i++)
             {
-                MessageBox.Show("Please select a node to search its items.");
-                return;
+                if (listBox.Items[i].ToString().Equals(input, StringComparison.OrdinalIgnoreCase))
+                {
+                    listBox.SelectedIndex = i;
+                    MessageBox.Show("Item found and selected in list box.");
+                    return;
+                }
             }
 
-            // بررسی آیا نود انتخاب شده درخت عمومی اصلی است یا نه
-            if (IsFirstNodeOfTree(selectedNode))
-            {
-                MessageBox.Show("You cannot search within the main general tree.");
-                return;
-            }
-
-            // جستجوی آیتم در زیر مجموعه نود انتخاب شده
-            TreeNode foundNode = FindNode(selectedNode.Nodes, input);
-
-            if (foundNode != null)
-            {
-                treeView.SelectedNode = foundNode;
-                treeView.SelectedNode.Expand();
-                treeView.Focus();
-                MessageBox.Show("Item found and selected.");
-            }
-            else
-            {
-                MessageBox.Show("Item not found, please make sure you have selected a node.");
-            }
+            MessageBox.Show("Item not found in list box.");
         }
 
-        // رویداد TextChanged برای محدود کردن تعداد فضاها
+        // رویداد تغییر متن در تکست باکس
         private void textBox_TextChanged(object sender, EventArgs e)
         {
             string input = textBox.Text;
             textBox.Text = RemoveExtraSpaces(input);
-            // مکان‌نما را به انتهای متن برگردانید
             textBox.SelectionStart = textBox.Text.Length;
         }
 
-        // تابع برای حذف فضاهای اضافی
+        // حذف فاصله‌های اضافی از متن ورودی
         private string RemoveExtraSpaces(string input)
         {
-            // حذف فضاهای متوالی و جایگزینی آنها با یک فضای واحد
             while (input.Contains("  "))
             {
                 input = input.Replace("  ", " ");
             }
             return input;
+        }
+
+        // رویداد کلید Enter برای textBox
+        private void textBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            // بررسی فشرده شدن کلید Enter
+            if (e.KeyCode == Keys.Enter)
+            {
+                string input = textBox.Text.Trim();
+
+                if (string.IsNullOrEmpty(input))
+                {
+                    MessageBox.Show("Please enter a valid name or number.");
+                    return;
+                }
+
+                if (listBox.Items.Contains(input))
+                {
+                    MessageBox.Show("Duplicate name is not allowed.");
+                    return;
+                }
+
+                if (GeneralTreeNode == null)
+                {
+                    DialogResult result = MessageBox.Show("No general tree found. Do you want to create a new tree with this name?",
+                                                          "Create New Tree",
+                                                          MessageBoxButtons.YesNo);
+                    if (result == DialogResult.Yes)
+                    {
+                        TreeNode rootNode = new TreeNode(input);
+                        treeView.Nodes.Clear();
+                        treeView.Nodes.Add(rootNode);
+                        GeneralTreeNode = rootNode;
+
+                        InsertNodes.Clear();
+                        AddItemNodes.Clear();
+
+                        listBox.Items.Add(input);
+                        ListBoxItems.Add(input); // اضافه کردن آیتم به لیست آیتم‌ها
+                        textBox.Clear();
+                    }
+                }
+                else
+                {
+                    listBox.Items.Add(input);
+                    ListBoxItems.Add(input); // اضافه کردن آیتم به لیست آیتم‌ها
+                    textBox.Clear();
+                }
+
+                e.SuppressKeyPress = true; // جلوگیری از بوق سیستم
+            }
+        }
+
+        private void buttonSearchNode_Click(object sender, EventArgs e)
+        {
+            string searchText = textBox.Text.Trim();
+
+            // بررسی اینکه آیا متن وارد شده خالی نیست
+            if (string.IsNullOrEmpty(searchText))
+            {
+                MessageBox.Show("Please enter a valid search text.");
+                return;
+            }
+
+            // جستجوی نود با متن وارد شده
+            TreeNode foundNode = FindNodeWithText(GeneralTreeNode, searchText);
+
+            // بررسی اینکه آیا نود با متن وارد شده پیدا شده یا خیر
+            if (foundNode != null)
+            {
+                // انتخاب نود پیداشده در درخت
+                treeView.SelectedNode = foundNode;
+                treeView.SelectedNode.Expand();
+                treeView.Focus();
+                MessageBox.Show("Node found and selected.");
+            }
+            else
+            {
+                MessageBox.Show("Node not found.");
+            }
+        }
+
+        // جستجوی نود با متن مورد نظر
+        private TreeNode FindNodeWithText(TreeNode rootNode, string searchText)
+        {
+            // بررسی اینکه آیا روت نود نال است یا خیر
+            if (rootNode == null)
+                return null;
+
+            // بررسی متن روت نود
+            if (rootNode.Text.Equals(searchText, StringComparison.OrdinalIgnoreCase))
+                return rootNode;
+
+            // حلقه‌ی تکرار بر روی تمامی نودهای زیرمجموعه روت نود
+            foreach (TreeNode node in rootNode.Nodes)
+            {
+                // جستجوی نود با متن مورد نظر در زیرمجموعه‌ها
+                TreeNode foundNode = FindNodeWithText(node, searchText);
+                // اگر نود پیدا شده است، آن را برگردان
+                if (foundNode != null)
+                    return foundNode;
+            }
+
+            // اگر نود با متن مورد نظر پیدا نشد، نال برگردان
+            return null;
+        }
+
+        private void buttonDeleteNode_Click(object sender, EventArgs e)
+        {
+            // بررسی اینکه آیا نودی انتخاب شده است یا خیر
+            if (treeView.SelectedNode == null)
+            {
+                MessageBox.Show("Please select a node to delete.");
+                return;
+            }
+
+            TreeNode selectedNode = treeView.SelectedNode;
+
+            // نمایش پیام هشدار برای تأیید حذف نود
+            DialogResult result = MessageBox.Show("Are you sure you want to delete this node and all its children?",
+                                                  "Confirm Delete",
+                                                  MessageBoxButtons.YesNo);
+            if (result == DialogResult.Yes)
+            {
+                // حذف نود و تمامی زیرمجموعه‌های آن
+                selectedNode.Remove();
+                UpdateListBox();
+                MessageBox.Show("Node and its children deleted successfully.");
+                textBox.Clear();
+            }
+        }
+
+        private void buttonDeSelectAll_Click_1(object sender, EventArgs e)
+        {
+            textBox.Clear();
+            // بررسی تمامی آیتم‌های ListBox
+            for (int i = 0; i < listBox.Items.Count; i++)
+            {
+                // بررسی اینکه آیا آیتم جاری انتخاب شده است یا خیر
+                if (listBox.GetSelected(i))
+                {
+                    // حذف انتخاب از آیتم جاری
+                    listBox.SetSelected(i, false);
+                }
+            }
+        }
+
+        // رویداد انتخاب آیتم در لیست باکس
+        private void listBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // انتقال نام آیتم انتخاب شده در لیست باکس به تکست باکس
+            if (listBox.SelectedItem != null)
+            {
+                textBox.Text = listBox.SelectedItem.ToString();
+            }
         }
     }
 }
