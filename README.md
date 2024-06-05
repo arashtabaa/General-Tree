@@ -1,4 +1,7 @@
 # General-Tree Manager
+
+[![GitHub release](https://img.shields.io/github/release/arashtabaa/General-Tree?style=flat-square)](https://github.com/arashtabaa/General-Tree/releases/latest)
+
 ![image](https://github.com/arashtabaa/General-Tree/assets/153722318/7f28ae2f-ae6d-4b15-86e9-93e5be4241dd)
 
 ### Example:
